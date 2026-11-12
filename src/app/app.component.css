@@ -1,0 +1,55 @@
+:host { display: block; }
+.page-shell { width: min(100% - 3rem, 940px); margin: auto; padding: 1.5rem 0 2rem; }
+.page-header, .section-heading, .result-card { display: flex; align-items: center; justify-content: space-between; }
+.brand { display: flex; align-items: center; gap: .6rem; color: #242323; font-size: 1.2rem; font-weight: 750; text-decoration: none; }
+.brand-mark { display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: .7rem; background: #e85d45; color: white; }
+.form-hint, .page-footer { color: #777574; font-size: .82rem; }
+.hero { max-width: 680px; margin: 6rem auto 5.5rem; text-align: center; }
+.eyebrow { margin: 0; color: #b94a36; font-size: .68rem; font-weight: 750; letter-spacing: .13em; }
+h1 { margin: 1rem 0 0; color: #242323; font-size: clamp(2.7rem, 7vw, 4.8rem); letter-spacing: -.075em; line-height: 1.03; }
+h1 span { color: #df634b; }
+.hero-copy { margin: 1.15rem 0 2.2rem; }
+.shorten-form { display: flex; gap: .5rem; padding: .45rem; border: 1px solid #e8e4e0; border-radius: 1.1rem; background: white; box-shadow: 0 14px 40px rgb(46 32 22 / 8%); text-align: left; }
+.shorten-form:focus-within { border-color: #df8c7c; }
+.shorten-form input { min-width: 0; flex: 1; padding: .85rem 1rem; border: 0; outline: 0; background: transparent; color: #242323; font: inherit; }
+.shorten-form button { display: inline-flex; align-items: center; justify-content: center; gap: .65rem; border: 0; border-radius: .8rem; background: #df634b; color: white; font: inherit; font-weight: 650; }
+.shorten-form button { min-height: 2.9rem; padding: 0 1.15rem; cursor: pointer; }
+.shorten-form button:hover:not(:disabled) { background: #c94f38; }
+.shorten-form button:focus-visible, a:focus-visible, .retry-button:focus-visible { outline: 3px solid #26211f; outline-offset: 3px; }
+.form-hint, .field-feedback { min-height: 1.25rem; margin: .8rem 0 0; font-size: .78rem; }
+.field-feedback { color: #b23c31; }
+.result-card { margin-top: 1.4rem; padding: 1rem; border: 1px solid #d5e8dc; border-radius: 1rem; background: #f5faf6; text-align: left; }
+.result-label { color: #777574; font-size: .74rem; }
+.result-card a { display: block; overflow: hidden; color: #286541; font-weight: 650; text-overflow: ellipsis; }
+.links-section { padding-top: 2rem; border-top: 1px solid #ebe8e5; }
+.section-heading { margin-bottom: 1.25rem; }
+h2 { margin: .35rem 0 0; color: #242323; font-size: 1.55rem; letter-spacing: -.045em; }
+.table-wrap { overflow-x: auto; border: 1px solid #ebe8e5; border-radius: .9rem; background: white; }
+table { width: 100%; border-collapse: collapse; text-align: left; }
+th, td { padding: .95rem 1.1rem; }
+th { color: #777574; font-size: .7rem; font-weight: 650; }
+td { border-top: 1px solid #f0eeec; color: #4a4745; font-size: .84rem; }
+.short-url { color: #c9513a; font-weight: 650; text-decoration: none; }
+.original-url { max-width: 0; }
+.original-url a { display: block; overflow: hidden; color: #777574; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+.hits-column { width: 5rem; text-align: right; font-variant-numeric: tabular-nums; }
+.table-status, .empty-state, .list-error { border: 1px solid #ebe8e5; border-radius: .9rem; background: white; }
+.table-status { margin: 0; padding: 1.4rem; color: #777574; text-align: center; }
+.empty-state { display: flex; min-height: 10rem; flex-direction: column; align-items: center; justify-content: center; color: #777574; font-size: .85rem; }
+.empty-state p { margin: .7rem 0 .2rem; color: #3a3735; font-weight: 650; }
+.list-error { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem; color: #a2352b; font-size: .85rem; }
+.retry-button { border: 0; background: transparent; color: #a2352b; font: inherit; font-weight: 650; text-decoration: underline; cursor: pointer; }
+.page-footer { margin-top: 3rem; text-align: center; }
+.sr-only { position: absolute; overflow: hidden; width: 1px; height: 1px; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 600px) {
+  .page-shell { width: min(100% - 2rem, 940px); padding-top: 1rem; }
+  .hero { margin: 4.5rem auto 4rem; }
+  .shorten-form { flex-direction: column; gap: .35rem; }
+  .shorten-form input { min-height: 2.7rem; }
+  .shorten-form button { justify-content: space-between; padding: 0 1rem; }
+  th, td { padding: .85rem .75rem; }
+  .original-url { min-width: 8rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
