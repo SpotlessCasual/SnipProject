@@ -1,0 +1,7 @@
+{
+  "name": "snip-bundle",
+  "private": true,
+  "scripts": {
+    "start": "bun server.js"
+  }
+}
