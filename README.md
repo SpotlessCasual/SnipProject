@@ -61,3 +61,5 @@ git push
 
 Repeat with `frontend` or `cli` as appropriate. The generated `bundle/` release
 is updated by `node scripts/build-bundle.mjs`; do not edit its contents by hand.
+Use `node scripts/build-bundle.mjs --push` to push both the generated bundle
+branch and its updated pointer on `main`.

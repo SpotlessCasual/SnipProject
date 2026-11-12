@@ -10,3 +10,7 @@
 	path = cli
 	url = https://github.com/SpotlessCasual/SnipProject.git
 	branch = cli
+[submodule "bundle"]
+	path = bundle
+	url = https://github.com/SpotlessCasual/SnipProject.git
+	branch = bundle
