@@ -28,8 +28,8 @@ jobs:
 
       - name: Configure automation identity
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Rebuild and push changed bundle
         run: node scripts/build-bundle.mjs --push
