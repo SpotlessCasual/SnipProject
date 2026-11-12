@@ -1,0 +1,183 @@
+name: Build and push image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - bundle
+      - .github/workflows/docker.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out all pinned submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npx ng build
+
+      - name: Test CLI
+        working-directory: cli
+        run: npm test
+
+      - name: Smoke test API and CLI together
+        run: |
+          cd backend
+          PORT=3949 BASE_URL=http://127.0.0.1:3949 bun run server.js > "$RUNNER_TEMP/snip-backend.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:3949/api/links >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          created=$(curl --silent --show-error --fail \
+            -H 'Content-Type: application/json' \
+            -d '{"url":"https://example.com/ci"}' \
+            http://127.0.0.1:3949/api/links)
+          code=$(printf '%s' "$created" | jq -er '.code')
+          printf '%s' "$created" | jq -e '.hits == 0 and (.createdAt | type == "string")' >/dev/null
+          curl --silent --show-error --fail http://127.0.0.1:3949/api/links \
+            | jq -e --arg code "$code" 'any(.[]; .code == $code)' >/dev/null
+
+          status=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            "http://127.0.0.1:3949/$code")
+          test "$status" = 302
+          curl --silent --show-error --fail http://127.0.0.1:3949/api/links \
+            | jq -e --arg code "$code" 'any(.[]; .code == $code and .hits == 1)' >/dev/null
+          SNIP_API=http://127.0.0.1:3949 node ../cli/cli.js ls | grep --fixed-strings "$code"
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out pinned submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Audit production dependencies
+        working-directory: frontend
+        run: |
+          npm ci --ignore-scripts
+          npm audit --omit=dev --audit-level=high
+
+  image-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out bundle
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image for scanning
+        run: docker buildx build --load --tag snip-release:scan ./bundle
+
+      - name: Smoke test container UI and API
+        run: |
+          docker run --detach --rm --name snip-image-smoke \
+            --publish 3950:3000 snip-release:scan
+          trap 'docker stop snip-image-smoke >/dev/null 2>&1 || true' EXIT
+
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:3950/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          curl --silent --show-error --fail http://127.0.0.1:3950/ \
+            | grep --quiet '<app-root'
+          curl --silent --show-error --fail \
+            -H 'Content-Type: application/json' \
+            -d '{"url":"https://example.com/container"}' \
+            http://127.0.0.1:3950/api/links \
+            | jq -e '.code | type == "string" and length == 6' >/dev/null
+
+      - name: Save scanned image
+        run: docker save snip-release:scan --output "$RUNNER_TEMP/snip-release.tar"
+
+      - name: Upload scanned image
+        uses: actions/upload-artifact@v4
+        with:
+          name: snip-release-image
+          path: ${{ runner.temp }}/snip-release.tar
+          retention-days: 1
+
+      - name: Scan image for high and critical vulnerabilities
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: snip-release:scan
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+
+  publish:
+    needs:
+      - verify
+      - dependency-audit
+      - image-scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download scanned image
+        uses: actions/download-artifact@v4
+        with:
+          name: snip-release-image
+          path: ${{ runner.temp }}
+
+      - name: Load the scanned image
+        run: docker load --input "$RUNNER_TEMP/snip-release.tar"
+
+      - name: Tag verified release
+        id: image
+        run: |
+          name="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          docker tag snip-release:scan "$name:latest"
+          docker tag snip-release:scan "$name:${GITHUB_SHA::7}"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish verified tags
+        run: |
+          docker push "${{ steps.image.outputs.name }}:latest"
+          docker push "${{ steps.image.outputs.name }}:${GITHUB_SHA::7}"
