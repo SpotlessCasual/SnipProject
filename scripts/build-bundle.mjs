@@ -89,12 +89,12 @@ try {
   );
 
   const bundleChanged = commitIfChanged(bundle, 'Build generated Snip release bundle');
-  if (push) {
+  if (push && bundleChanged) {
     run('git', ['push', 'origin', 'HEAD:bundle'], bundle);
   }
 
   const mainChanged = commitIfChanged(root, 'Bump bundle submodule');
-  if (push) {
+  if (push && mainChanged) {
     run('git', ['push', 'origin', 'main'], root);
   }
 
